@@ -1,0 +1,101 @@
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class FibonacciGeneratorApp extends Application {
+
+    private TextField lengthField;
+    private CheckBox evenFilter;
+    private CheckBox oddFilter;
+    private TextArea outputArea;
+    private Button generateButton;
+
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("Fibonacci Generator");
+
+        // --- Input section ---
+        Label lengthLabel = new Label("Enter sequence length:");
+        lengthField = new TextField("40");
+        lengthField.setPrefWidth(80);
+
+        generateButton = new Button("Fib Gen");
+        generateButton.setOnAction(e -> generateFibonacci());
+
+        HBox inputBox = new HBox(10, lengthLabel, lengthField, generateButton);
+        inputBox.setAlignment(Pos.CENTER_LEFT);
+
+        // --- Filters ---
+        evenFilter = new CheckBox("Even only");
+        oddFilter = new CheckBox("Odd only");
+
+        HBox filterBox = new HBox(15, evenFilter, oddFilter);
+        filterBox.setAlignment(Pos.CENTER_LEFT);
+
+        // --- Output area ---
+        outputArea = new TextArea();
+        outputArea.setEditable(false);
+        outputArea.setPrefRowCount(6);
+        outputArea.setWrapText(true);
+
+        VBox root = new VBox(12);
+        root.setPadding(new Insets(15));
+        root.getChildren().addAll(
+                new Label("Fibonacci Generator"),
+                inputBox,
+                filterBox,
+                new Label("Generated sequence:"),
+                outputArea
+        );
+
+        Scene scene = new Scene(root, 600, 300);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void generateFibonacci() {
+        int length;
+        try {
+            length = Integer.parseInt(lengthField.getText());
+            if (length <= 0) {
+                outputArea.setText("Please enter a positive integer for sequence length.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            outputArea.setText("Invalid number. Please enter a valid integer.");
+            return;
+        }
+
+        // --- Generate Fibonacci sequence ---
+        List<Long> fibSeq = new ArrayList<>();
+        fibSeq.add(0L);
+        fibSeq.add(1L);
+        for (int i = 2; i < length; i++) {
+            fibSeq.add(fibSeq.get(i - 1) + fibSeq.get(i - 2));
+        }
+
+        // --- Apply filters ---
+        if (evenFilter.isSelected() && !oddFilter.isSelected()) {
+            fibSeq.removeIf(n -> n % 2 != 0);
+        } else if (oddFilter.isSelected() && !evenFilter.isSelected()) {
+            fibSeq.removeIf(n -> n % 2 == 0);
+        }
+        // If both checked or neither checked → show all numbers
+
+        // --- Display results ---
+        outputArea.setText(fibSeq.toString());
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+
+
