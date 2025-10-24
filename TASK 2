@@ -1,0 +1,182 @@
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class FibonacciFilterAndSortApp extends Application {
+
+    private TextArea outputArea;
+    private TextField lengthField;
+    private List<Long> fibonacciList = new ArrayList<>();
+
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("Fibonacci Sequence Generator with Filtering and Sorting");
+
+        // Input field
+        Label lengthLabel = new Label("Enter sequence length (e.g. 30–50):");
+        lengthField = new TextField();
+        lengthField.setPromptText("e.g. 30");
+
+        // Buttons
+        Button genButton = new Button("Fib Gen");
+        Button evenFilterButton = new Button("Filter Even");
+        Button oddFilterButton = new Button("Filter Odd");
+        Button resetButton = new Button("Reset");
+        Button sortButton = new Button("Custom Sort");
+
+        // Output area
+        outputArea = new TextArea();
+        outputArea.setEditable(false);
+        outputArea.setWrapText(true);
+
+        // Button actions
+        genButton.setOnAction(e -> generateFibonacci());
+        evenFilterButton.setOnAction(e -> filterEven());
+        oddFilterButton.setOnAction(e -> filterOdd());
+        resetButton.setOnAction(e -> showFullSequence());
+        sortButton.setOnAction(e -> customSort());
+
+        // Layout
+        HBox inputBox = new HBox(10, lengthLabel, lengthField, genButton);
+        HBox filterBox = new HBox(10, evenFilterButton, oddFilterButton, resetButton, sortButton);
+        VBox root = new VBox(15, inputBox, filterBox, outputArea);
+        root.setPadding(new Insets(15));
+
+        Scene scene = new Scene(root, 700, 500);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    /** Generate Fibonacci sequence **/
+    private void generateFibonacci() {
+        fibonacciList.clear();
+        outputArea.clear();
+
+        try {
+            int n = Integer.parseInt(lengthField.getText());
+            if (n <= 0) {
+                outputArea.setText("Please enter a positive number.");
+                return;
+            }
+
+            long a = 0, b = 1;
+            fibonacciList.add(a);
+            fibonacciList.add(b);
+
+            for (int i = 2; i < n; i++) {
+                long next = a + b;
+                fibonacciList.add(next);
+                a = b;
+                b = next;
+            }
+
+            displaySequence(fibonacciList);
+        } catch (NumberFormatException ex) {
+            outputArea.setText("Invalid input! Please enter a number.");
+        }
+    }
+
+    /** Filter even numbers **/
+    private void filterEven() {
+        if (fibonacciList.isEmpty()) {
+            outputArea.setText("Please generate the Fibonacci sequence first.");
+            return;
+        }
+        List<Long> evenList = fibonacciList.stream()
+                .filter(num -> num % 2 == 0)
+                .collect(Collectors.toList());
+        displaySequence(evenList);
+    }
+
+    /** Filter odd numbers **/
+    private void filterOdd() {
+        if (fibonacciList.isEmpty()) {
+            outputArea.setText("Please generate the Fibonacci sequence first.");
+            return;
+        }
+        List<Long> oddList = fibonacciList.stream()
+                .filter(num -> num % 2 != 0)
+                .collect(Collectors.toList());
+        displaySequence(oddList);
+    }
+
+    /** Reset to full sequence **/
+    private void showFullSequence() {
+        if (!fibonacciList.isEmpty()) {
+            displaySequence(fibonacciList);
+        } else {
+            outputArea.setText("Please generate the Fibonacci sequence first.");
+        }
+    }
+
+    /** Custom bucket sort function **/
+    private void customSort() {
+        if (fibonacciList.isEmpty()) {
+            outputArea.setText("Please generate the Fibonacci sequence first.");
+            return;
+        }
+
+        // Create 9 buckets (2–9 and non-divisible)
+        Map<String, List<Long>> buckets = new LinkedHashMap<>();
+        for (int i = 2; i <= 9; i++) {
+            buckets.put("Bucket " + i, new ArrayList<>());
+        }
+        buckets.put("Non-divisible", new ArrayList<>());
+
+        // Distribute numbers
+        for (Long num : fibonacciList) {
+            if (num == 0) {
+                // 0 is divisible by all numbers → put in largest (9)
+                buckets.get("Bucket 9").add(num);
+                continue;
+            }
+
+            int largestDivisor = -1;
+            for (int i = 2; i <= 9; i++) {
+                if (num % i == 0) {
+                    largestDivisor = i;
+                }
+            }
+
+            if (largestDivisor != -1) {
+                buckets.get("Bucket " + largestDivisor).add(num);
+            } else {
+                buckets.get("Non-divisible").add(num);
+            }
+        }
+
+        // Build output text
+        StringBuilder sb = new StringBuilder("Custom Sorted Fibonacci Numbers:\n\n");
+        for (Map.Entry<String, List<Long>> entry : buckets.entrySet()) {
+            sb.append(entry.getKey()).append(": ");
+            if (entry.getValue().isEmpty()) {
+                sb.append("(none)");
+            } else {
+                sb.append(entry.getValue().stream()
+                        .map(String::valueOf)
+                        .collect(Collectors.joining(", ")));
+            }
+            sb.append("\n\n");
+        }
+
+        outputArea.setText(sb.toString());
+    }
+
+    /** Display list in output area **/
+    private void displaySequence(List<Long> list) {
+        String result = list.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(", "));
+        outputArea.setText(result);
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
