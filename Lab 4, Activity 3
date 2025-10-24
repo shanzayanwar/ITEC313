@@ -1,0 +1,43 @@
+import java.util.*;
+
+public class VowelConsonantCounter {
+    public static void main(String[] args) {
+        Scanner input = new Scanner(System.in);
+
+        // Prompt user for input
+        System.out.print("Enter a string: ");
+        String text = input.nextLine().toUpperCase(); // make uppercase for simplicity
+
+        Set<Character> vowelsSet = new HashSet<>();
+        Set<Character> consonantsSet = new HashSet<>();
+        Map<Character, Integer> vowelCountMap = new HashMap<>();
+
+        // Initialize vowel counts to 0
+        char[] vowels = {'A', 'E', 'I', 'O', 'U'};
+        for (char v : vowels) {
+            vowelCountMap.put(v, 0);
+        }
+
+        // Process each character
+        for (char ch : text.toCharArray()) {
+            if (Character.isLetter(ch)) {
+                if (vowelCountMap.containsKey(ch)) {
+                    vowelsSet.add(ch); // unique vowel
+                    vowelCountMap.put(ch, vowelCountMap.get(ch) + 1); // count occurrences
+                } else {
+                    consonantsSet.add(ch); // unique consonant
+                }
+            }
+        }
+
+        // Display results
+        System.out.println("The number of vowels is " + vowelsSet.size());
+        System.out.println("The number of consonants is " + consonantsSet.size());
+
+        for (char v : vowels) {
+            System.out.println("The number of " + v + " is " + vowelCountMap.get(v));
+        }
+
+        input.close();
+    }
+}
