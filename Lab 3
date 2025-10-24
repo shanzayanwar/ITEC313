@@ -1,0 +1,61 @@
+import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+
+public class ListView extends Application {
+
+    @Override
+    public void start(Stage primaryStage) {
+        // Observable list for ListView
+        ObservableList<String> items = FXCollections.observableArrayList();
+
+        // Use fully qualified name to avoid conflict with our class name
+        javafx.scene.control.ListView<String> listView = new javafx.scene.control.ListView<>(items);
+
+        // TextField for input
+        TextField textField = new TextField();
+        textField.setPromptText("Enter a string");
+
+        // Add button
+        Button addButton = new Button("Add");
+        addButton.setOnAction(e -> {
+            String input = textField.getText().trim();
+            if (!input.isEmpty()) {
+                items.add(input);
+                textField.clear();
+            }
+        });
+
+        // Delete button
+        Button deleteButton = new Button("Delete");
+        deleteButton.setOnAction(e -> {
+            String selected = listView.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                items.remove(selected);
+            }
+        });
+
+        // Layout for input field and Add button
+        HBox inputBox = new HBox(10, textField, addButton);
+
+        // Main layout
+        BorderPane root = new BorderPane();
+        root.setCenter(listView);
+        root.setTop(inputBox);
+        root.setBottom(deleteButton);
+
+        // Scene and Stage
+        Scene scene = new Scene(root, 400, 300);
+        primaryStage.setTitle("ListView Add/Delete Example");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
