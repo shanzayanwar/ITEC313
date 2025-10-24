@@ -1,179 +1,156 @@
 import javafx.application.Application;
-import javafx.geometry.Insets;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
+import javafx.scene.layout.VBox;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-public class FibonacciFilterAndSortApp extends Application {
+public class SortingFromFile extends Application {
 
-    private TextArea outputArea;
-    private TextField lengthField;
-    private List<Long> fibonacciList = new ArrayList<>();
+    private static final int RUNS = 100; // run each sort 100 times
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Fibonacci Sequence Generator with Filtering and Sorting");
+        Label title = new Label("Sorting Algorithm Comparison");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
-        // Input field
-        Label lengthLabel = new Label("Enter sequence length (e.g. 30–50):");
-        lengthField = new TextField();
-        lengthField.setPromptText("e.g. 30");
+        Button uploadButton = new Button("Upload File");
+        TextArea output = new TextArea();
+        output.setEditable(false);
 
-        // Buttons
-        Button genButton = new Button("Fib Gen");
-        Button evenFilterButton = new Button("Filter Even");
-        Button oddFilterButton = new Button("Filter Odd");
-        Button resetButton = new Button("Reset");
-        Button sortButton = new Button("Custom Sort");
+        uploadButton.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select File with Integers");
+            File file = fileChooser.showOpenDialog(primaryStage);
 
-        // Output area
-        outputArea = new TextArea();
-        outputArea.setEditable(false);
-        outputArea.setWrapText(true);
+            if (file != null) {
+                try {
+                    // Read integers from file
+                    List<Integer> dataList = new ArrayList<>();
+                    BufferedReader reader = new BufferedReader(new FileReader(file));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        dataList.add(Integer.parseInt(line.trim()));
+                    }
+                    reader.close();
+                    int[] data = dataList.stream().mapToInt(Integer::intValue).toArray();
 
-        // Button actions
-        genButton.setOnAction(e -> generateFibonacci());
-        evenFilterButton.setOnAction(e -> filterEven());
-        oddFilterButton.setOnAction(e -> filterOdd());
-        resetButton.setOnAction(e -> showFullSequence());
-        sortButton.setOnAction(e -> customSort());
+                    output.clear();
+                    output.appendText("File loaded successfully! Number of integers: " + data.length + "\n");
+                    output.appendText("Running sorting algorithms 100 times each...\n\n");
 
-        // Layout
-        HBox inputBox = new HBox(10, lengthLabel, lengthField, genButton);
-        HBox filterBox = new HBox(10, evenFilterButton, oddFilterButton, resetButton, sortButton);
-        VBox root = new VBox(15, inputBox, filterBox, outputArea);
-        root.setPadding(new Insets(15));
+                    // Measure average times
+                    double bubbleTime = measureAverageTime(data, this::bubbleSort);
+                    double mergeTime = measureAverageTime(data, this::mergeSort);
+                    double quickTime = measureAverageTime(data, this::quickSort);
 
-        Scene scene = new Scene(root, 700, 500);
+                    // Show results
+                    output.appendText("Average Sorting Times (100 runs):\n");
+                    output.appendText(String.format("Bubble Sort : %.4f seconds\n", bubbleTime));
+                    output.appendText(String.format("Merge Sort  : %.4f seconds\n", mergeTime));
+                    output.appendText(String.format("Quick Sort  : %.4f seconds\n", quickTime));
+
+                } catch (Exception ex) {
+                    output.setText("Error reading file: " + ex.getMessage());
+                }
+            }
+        });
+
+        VBox layout = new VBox(10, title, uploadButton, output);
+        layout.setStyle("-fx-padding: 20; -fx-font-size: 14px;");
+        Scene scene = new Scene(layout, 500, 400);
+        primaryStage.setTitle("Sorting Algorithms from File");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    /** Generate Fibonacci sequence **/
-    private void generateFibonacci() {
-        fibonacciList.clear();
-        outputArea.clear();
-
-        try {
-            int n = Integer.parseInt(lengthField.getText());
-            if (n <= 0) {
-                outputArea.setText("Please enter a positive number.");
-                return;
-            }
-
-            long a = 0, b = 1;
-            fibonacciList.add(a);
-            fibonacciList.add(b);
-
-            for (int i = 2; i < n; i++) {
-                long next = a + b;
-                fibonacciList.add(next);
-                a = b;
-                b = next;
-            }
-
-            displaySequence(fibonacciList);
-        } catch (NumberFormatException ex) {
-            outputArea.setText("Invalid input! Please enter a number.");
+    // Run sorting algorithm multiple times and compute average
+    private double measureAverageTime(int[] arr, SortAlgorithm algorithm) {
+        double total = 0;
+        for (int i = 0; i < RUNS; i++) {
+            int[] copy = Arrays.copyOf(arr, arr.length);
+            long start = System.nanoTime();
+            algorithm.sort(copy);
+            long end = System.nanoTime();
+            total += (end - start) / 1e9; // convert to seconds
         }
+        return total / RUNS;
     }
 
-    /** Filter even numbers **/
-    private void filterEven() {
-        if (fibonacciList.isEmpty()) {
-            outputArea.setText("Please generate the Fibonacci sequence first.");
-            return;
-        }
-        List<Long> evenList = fibonacciList.stream()
-                .filter(num -> num % 2 == 0)
-                .collect(Collectors.toList());
-        displaySequence(evenList);
-    }
+    // --- Sorting Algorithms ---
 
-    /** Filter odd numbers **/
-    private void filterOdd() {
-        if (fibonacciList.isEmpty()) {
-            outputArea.setText("Please generate the Fibonacci sequence first.");
-            return;
-        }
-        List<Long> oddList = fibonacciList.stream()
-                .filter(num -> num % 2 != 0)
-                .collect(Collectors.toList());
-        displaySequence(oddList);
-    }
-
-    /** Reset to full sequence **/
-    private void showFullSequence() {
-        if (!fibonacciList.isEmpty()) {
-            displaySequence(fibonacciList);
-        } else {
-            outputArea.setText("Please generate the Fibonacci sequence first.");
-        }
-    }
-
-    /** Custom bucket sort function **/
-    private void customSort() {
-        if (fibonacciList.isEmpty()) {
-            outputArea.setText("Please generate the Fibonacci sequence first.");
-            return;
-        }
-
-        // Create 9 buckets (2–9 and non-divisible)
-        Map<String, List<Long>> buckets = new LinkedHashMap<>();
-        for (int i = 2; i <= 9; i++) {
-            buckets.put("Bucket " + i, new ArrayList<>());
-        }
-        buckets.put("Non-divisible", new ArrayList<>());
-
-        // Distribute numbers
-        for (Long num : fibonacciList) {
-            if (num == 0) {
-                // 0 is divisible by all numbers → put in largest (9)
-                buckets.get("Bucket 9").add(num);
-                continue;
-            }
-
-            int largestDivisor = -1;
-            for (int i = 2; i <= 9; i++) {
-                if (num % i == 0) {
-                    largestDivisor = i;
+    // Bubble Sort
+    private void bubbleSort(int[] arr) {
+        int n = arr.length;
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    int temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
                 }
             }
-
-            if (largestDivisor != -1) {
-                buckets.get("Bucket " + largestDivisor).add(num);
-            } else {
-                buckets.get("Non-divisible").add(num);
-            }
         }
-
-        // Build output text
-        StringBuilder sb = new StringBuilder("Custom Sorted Fibonacci Numbers:\n\n");
-        for (Map.Entry<String, List<Long>> entry : buckets.entrySet()) {
-            sb.append(entry.getKey()).append(": ");
-            if (entry.getValue().isEmpty()) {
-                sb.append("(none)");
-            } else {
-                sb.append(entry.getValue().stream()
-                        .map(String::valueOf)
-                        .collect(Collectors.joining(", ")));
-            }
-            sb.append("\n\n");
-        }
-
-        outputArea.setText(sb.toString());
     }
 
-    /** Display list in output area **/
-    private void displaySequence(List<Long> list) {
-        String result = list.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(", "));
-        outputArea.setText(result);
+    // Merge Sort
+    private void mergeSort(int[] arr) {
+        if (arr.length <= 1) return;
+        int mid = arr.length / 2;
+        int[] left = Arrays.copyOfRange(arr, 0, mid);
+        int[] right = Arrays.copyOfRange(arr, mid, arr.length);
+        mergeSort(left);
+        mergeSort(right);
+        merge(arr, left, right);
+    }
+
+    private void merge(int[] arr, int[] left, int[] right) {
+        int i = 0, j = 0, k = 0;
+        while (i < left.length && j < right.length) {
+            if (left[i] <= right[j]) arr[k++] = left[i++];
+            else arr[k++] = right[j++];
+        }
+        while (i < left.length) arr[k++] = left[i++];
+        while (j < right.length) arr[k++] = right[j++];
+    }
+
+    // Quick Sort
+    private void quickSort(int[] arr) {
+        quickSortHelper(arr, 0, arr.length - 1);
+    }
+
+    private void quickSortHelper(int[] arr, int low, int high) {
+        if (low < high) {
+            int pi = partition(arr, low, high);
+            quickSortHelper(arr, low, pi - 1);
+            quickSortHelper(arr, pi + 1, high);
+        }
+    }
+
+    private int partition(int[] arr, int low, int high) {
+        int pivot = arr[high];
+        int i = low - 1;
+        for (int j = low; j < high; j++) {
+            if (arr[j] <= pivot) {
+                i++;
+                int temp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = temp;
+            }
+        }
+        int temp = arr[i + 1];
+        arr[i + 1] = arr[high];
+        arr[high] = temp;
+        return i + 1;
+    }
+
+    interface SortAlgorithm {
+        void sort(int[] arr);
     }
 
     public static void main(String[] args) {
