@@ -1,0 +1,50 @@
+import java.util.Scanner;
+
+public class KnapsackRecursive {
+
+    // Recursive method to compute m(i, weightLimit)
+    public static double m(int i, double weightLimit, double[] w) {
+        // Base cases
+        if (i == 0 || weightLimit == 0) {
+            return 0;
+        }
+
+        // If current item weight is more than remaining capacity, skip it
+        if (w[i - 1] > weightLimit) {
+            return m(i - 1, weightLimit, w);
+        } else {
+            // Choose max between skipping or including the current item
+            return Math.max(
+                m(i - 1, weightLimit, w),                         // exclude current item
+                w[i - 1] + m(i - 1, weightLimit - w[i - 1], w)    // include current item
+            );
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner input = new Scanner(System.in);
+
+        // Prompt user for number of items
+        System.out.print("Enter the number of items: ");
+        int n = input.nextInt();
+
+        // Prompt user for weights
+        double[] weights = new double[n];
+        System.out.print("Enter the weights for each item: ");
+        for (int i = 0; i < n; i++) {
+            weights[i] = input.nextDouble();
+        }
+
+        // Prompt user for bag capacity
+        System.out.print("Enter the weight limit for the bag: ");
+        double weightLimit = input.nextDouble();
+
+        // Compute maximum weight
+        double maxWeight = m(n, weightLimit, weights);
+
+        // Display result
+        System.out.println("The maximum weight of the items placed in the bag is " + maxWeight);
+
+        input.close();
+    }
+}
