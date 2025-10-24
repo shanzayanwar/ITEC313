@@ -1,0 +1,64 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
+
+public class StackQueueDemo {
+    public static void main(String[] args) {
+        String fileName = "numbers.txt";
+
+        // Step 1: Create a file and write 10 integers with some consecutive duplicates
+        try {
+            FileWriter writer = new FileWriter(fileName);
+            writer.write("5 5 8 3 3 9 1 1 7 7"); // sample numbers
+            writer.close();
+            System.out.println("File '" + fileName + "' created with test numbers.");
+        } catch (IOException e) {
+            System.out.println("Error writing to file.");
+            return;
+        }
+
+        Stack<Integer> stack = new Stack<>();
+        Queue<Integer> queue = new LinkedList<>();
+
+        // Step 2: Read numbers from file
+        try {
+            File file = new File(fileName);
+            Scanner input = new Scanner(file);
+
+            int count = 0;
+            while (input.hasNextInt() && count < 10) {
+                int num = input.nextInt();
+                stack.push(num);    // push into stack for reverse order
+                queue.offer(num);   // add into queue for original order
+                count++;
+            }
+            input.close();
+
+            // Step 3: Display reverse order using stack
+            System.out.print("\nNumbers in reverse order (Stack, no consecutive duplicates): ");
+            Integer prev = null;
+            while (!stack.isEmpty()) {
+                int current = stack.pop();
+                if (prev == null || prev != current) {
+                    System.out.print(current + " ");
+                }
+                prev = current;
+            }
+
+            // Step 4: Display original order using queue
+            System.out.print("\nNumbers in original order (Queue, no consecutive duplicates): ");
+            prev = null;
+            while (!queue.isEmpty()) {
+                int current = queue.poll();
+                if (prev == null || prev != current) {
+                    System.out.print(current + " ");
+                }
+                prev = current;
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error reading the file.");
+        }
+    }
+}
